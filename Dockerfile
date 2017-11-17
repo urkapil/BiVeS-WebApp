@@ -1,20 +1,15 @@
-FROM tomcat:jre8
-MAINTAINER martin scharm
+# Dockerfile
+FROM demo/oracle-java:8
 
+ENV MAVEN_VERSION 3.3.9
 
-COPY src /srv/src
-COPY pom.xml /srv/pom.xml
-WORKDIR /srv/
+RUN mkdir -p /usr/share/maven \
+  && curl -fsSL http://apache.osuosl.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz \
+    | tar -xzC /usr/share/maven --strip-components=1 \
+  && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
-# install dependencies, compile the code, and get rid of dependencies...
-RUN deps="maven openjdk-${JAVA_VERSION%%[-~bu]*}-jdk=$JAVA_DEBIAN_VERSION" \
-	&& apt-get update \
-	&& apt-get install -y --no-install-recommends $deps \
-	&& mvn package \
-	&& cp target/*war /usr/local/tomcat/webapps/ROOT.war \
-	&& mvn clean \
-	&& rm -rf /usr/local/tomcat/webapps/ROOT \
-	&& rm -rf /root/.m2 /usr/share/doc \
-	&& apt-get purge -y --auto-remove maven \
-	&& apt-get clean \
-	&& rm -rf /var/lib/apt/lists/*
+ENV MAVEN_HOME /usr/share/maven
+
+VOLUME /root/.m2
+
+CMD ["mvn"]
